@@ -4,10 +4,8 @@ const sequelize = require('../../config/connection');
 
 //get all users 
 router.get('/', (req, res) => {
-    console.log('======================');
     Post.findAll({
         //Query configuration
-        order: [['created_at', 'DESC']],
         attributes: ['id', 'post_url', 'title', 'created_at', [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count']],
         include: [
             {
@@ -24,7 +22,12 @@ router.get('/', (req, res) => {
             }
         ]
     })
-        .then(dbPostData => res.json(dbPostData))
+        .then(dbPostData => {
+            //pass a single post object into the homepage template
+            console.log(dbPostData[0]);
+            const posts = dbPostData.map(post => post.get({plain: true}));
+            res.render('homepage', {posts});
+        })
         .catch(err => {
             console.log(err);
             res.status(500).json(err);
